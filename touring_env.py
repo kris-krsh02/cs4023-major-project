@@ -29,6 +29,7 @@ class TurtlebotTouringEnv(gym.Env):
 
         # TODO: How to implement and enumerate Pose goals here?
         # need to come up with the sequential logic
+        self.curr_goal = rospy.get_param("/goal_landmark")
 
         # Velocity parameters
         self.linear_velocity = rospy.get_param("/linear_velocity")
@@ -72,9 +73,9 @@ class TurtlebotTouringEnv(gym.Env):
         self.gazebo.unpauseSim()
 
         # TODO: Reset robot conditions
-        state = self.take_observation()
-
+        data = self.take_observation()
         self.gazebo.pauseSim()
+        return [data]
 
     def _step(self, action):
         """
@@ -191,6 +192,21 @@ class TurtlebotTouringEnv(gym.Env):
 
         relative_angles = np.unwrap(scan_angles)
         relative_angles[relative_angles > np.pi] -= 2 * np.pi
+
+        weights = self.compute_directional_weights(relative_angles, max_weight=10.0)
+        safe_dists = np.clip(scan_ranges - 0.25, 1e-2, 3.5)
+        decay = np.exp(-3.0 * safe_dists)
+        weighted_decay = np.dot(weights, decay)
+
+        reward = -(1.0 + 4.0 * weighted_decay)
+        return reward
+
+    def compute_directional_weights(self, relative_angles, max_weight=10.0):
+        power = 6
+        raw_weights = (np.cos(relative_angles)) ** power + 0.1
+        scaled_weights = raw_weights * (max_weight / np.max(raw_weights))
+        normalized_weights = scaled_weights / np.sum(scaled_weights)
+        return normalized_weights
 
     def calculate_distance(self, a, b):
         return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
