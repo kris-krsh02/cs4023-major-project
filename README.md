@@ -30,6 +30,8 @@ Since we are learning a predefined route to be traversed, how should training be
 
 - Option 1: Intermediary goals with final landmark as final goal
   - Will store a list of goals. Progressively reach each goal with a big reward, and change the goal, do not terminate. Final landmark has big big reward.
+  Here is a source about sequential goals:
+  https://arxiv.org/pdf/2503.21677v1
 - Option 2: Let the robot randomly go to each landmark from a random starting position?
   - Prefer the first one; this doesn't sound that efficient.
 
