@@ -3,9 +3,11 @@
 TODO:
 
 - Creating the world
-- Create master node
+- Create master node DONE
 - Save model for inference DONE
-- Evaluation metrics
+- Evaluation metrics DONE
+- Add parameters
+- Make a launch file
 
 ## Layers
 

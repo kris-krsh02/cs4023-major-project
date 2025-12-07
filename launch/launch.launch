@@ -1,0 +1,7 @@
+<launch>
+    <!-- Load the parameters for the algorithm -->
+    <rosparam command="load" file="$(cs4023-major-project)/scripts/params.yaml" />
+
+    <!-- Launch the training system -->
+    <node pkg="cs4023-major-project" name="gym_train" type="master.py" output="screen"/> 
+</launch>

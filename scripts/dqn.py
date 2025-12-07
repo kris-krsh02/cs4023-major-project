@@ -3,6 +3,7 @@
 
 
 import gym
+import rospy
 import math
 import random
 import numpy as np
@@ -143,10 +144,12 @@ class DQNAgent:
     def train(self, num_episodes):
         for episode in range(num_episodes):
             state = self.env.reset()
+            cumulative_reward = 0
             for t in count():
                 # Select and perform an action
                 action = self.get_action(state)
                 next_state, reward, done, info = self.env.step(action)
+                cumulative_reward += reward
                 reward = torch.tensor([reward])
 
                 self.memory.push(state, action, next_state, reward)
@@ -164,5 +167,7 @@ class DQNAgent:
                     self.target_network.load_state_dict(
                         self.policy_network.state_dict()
                     )
+
+            rospy.loginfo(f"Episode {episode} reward: {cumulative_reward}")
 
         torch.save(self.target_network.state_dict())

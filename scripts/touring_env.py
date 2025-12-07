@@ -9,8 +9,9 @@ import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 from kobuki_msgs.msg import BumperEvent
+from geometry_msgs.msg import Point
 from nav_msgs.msg import Odometry
-from gazebo_connection import GazeboConnection
+from scripts.gazebo_connection import GazeboConnection
 
 
 reg = register(
@@ -29,14 +30,14 @@ class TurtlebotTouringEnv(gym.Env):
 
         # TODO: How to implement and enumerate Pose goals here?
         # need to come up with the sequential logic
-        self.curr_goal = rospy.get_param("/goal_landmark")
+        self.curr_goal = Point(2, 2, 0)  # TODO: Define accurate
 
         # Velocity parameters
         self.linear_velocity = rospy.get_param("/linear_velocity")
         self.fr_angular = rospy.get_param("/fast_right_angular_velocity")
         self.fl_angular = rospy.get_param("/fast_left_angular_velocity")
-        self.sr_angular = rospy.get_param("/fast_right_angular_velocity")
-        self.sl_angular = rospy.get_param("/fast_right_angular_velocity")
+        self.sr_angular = rospy.get_param("/slow_right_angular_velocity")
+        self.sl_angular = rospy.get_param("/slow_left_angular_velocity")
 
         self.running_step = rospy.get_param("/running_step")
         self.goal_threshold = rospy.get_param("/goal_thres")
@@ -73,6 +74,7 @@ class TurtlebotTouringEnv(gym.Env):
         self.gazebo.unpauseSim()
 
         # TODO: Reset robot conditions
+        self.reset_robot()
         data = self.take_observation()
         self.gazebo.pauseSim()
         return [data]
@@ -110,6 +112,12 @@ class TurtlebotTouringEnv(gym.Env):
 
         reward, done = self.calculate_reward(data)
         return data, reward, done, {}
+
+    def reset_robot(self):
+        vel_cmd = Twist()
+        vel_cmd.linear.x = 0.0
+        vel_cmd.angular.z = 0.0
+        self.vel_pub(vel_cmd)
 
     def take_observation(self):
         # LaserScan data
