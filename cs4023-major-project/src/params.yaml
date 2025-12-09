@@ -1,8 +1,8 @@
-linear_velocity: 1.0 
+linear_velocity: 0.2
 fast_right_angular_velocity: -0.75
 fast_left_angular_velocity: 0.75
 slow_right_angular_velocity: -0.25
 slow_left_angular_velocity: 0.25
 running_step: 0.3
-goal_thres: 0.4
+goal_thres: 0.5
 obstacle_thres: 0.5

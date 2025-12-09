@@ -1,23 +1,23 @@
 ### This is for prototyping purposes, not full DDQN
 ### I want to test if the env works before starting with the complicated model
+#!/usr/bin/env python3
 
 
-import gym
+import torch
+import gymnasium as gym
 import rospy
 import math
 import random
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+# import matplotlib
+# import matplotlib.pyplot as plt
 from collections import namedtuple
 from itertools import count
-from PIL import Image
+# from PIL import Image
 
-import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import torchvision.transforms as T
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
@@ -26,10 +26,13 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(27, 32), nn.ReLU(), nn.Linear(32, 64), nn.ReLU(), nn.Linear(64, 5)
+            nn.Linear(46, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, 5)
         )
 
     def forward(self, x):
+        # print(x.shape)
+        # print(x.type())
+        x = x.float()
         output = self.linear_relu_stack(x)
         return output
 
@@ -63,12 +66,12 @@ class ReplayMemory(object):
 class DQNAgent:
     def __init__(self, env):
         self.env = env
-        policy_network = NeuralNetwork()
-        target_network = NeuralNetwork()
-        target_network.load_state_dict(policy_network.state_dict())
-        target_network.eval()
+        self.policy_network = NeuralNetwork()
+        self.target_network = NeuralNetwork()
+        self.target_network.load_state_dict(self.policy_network.state_dict())
+        self.target_network.eval()
 
-        self.optimizer = optim.RMSprop(policy_network.parameters())
+        self.optimizer = optim.RMSprop(self.policy_network.parameters())
         self.memory = ReplayMemory(1000)
         self.steps_done = 0
 
@@ -89,13 +92,22 @@ class DQNAgent:
         eps_threshold = self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(
             -1.0 * self.steps_done / self.EPS_DECAY
         )
+        action=None
 
         self.steps_done += 1
         if sample > eps_threshold:
             with torch.no_grad():
-                return self.policy_network(state).max(1)[1]
+                formatted_state = []
+                formatted_state.extend(state[0])
+                formatted_state.append(state[1])
+                formatted_state.append(state[2])
+                formatted_state.append(state[3])
+                formatted_state = torch.tensor(formatted_state)
+                action = self.policy_network(formatted_state).max(0)[1].reshape(1, 1)
         else:
-            return torch.tensor([[random.randrange(5)]], device="cpu", dtype=torch.long)
+            action = torch.tensor([[random.randrange(5)]], device="cpu", dtype=torch.long)
+        print(action.shape)
+        return action
 
     def update_model(self):
         if len(self.memory) < self.BATCH_SIZE:
@@ -143,16 +155,31 @@ class DQNAgent:
 
     def train(self, num_episodes):
         for episode in range(num_episodes):
-            state = self.env.reset()
+            state, _ = self.env.reset()
             cumulative_reward = 0
             for t in count():
                 # Select and perform an action
                 action = self.get_action(state)
+                formatted_state = []
+                formatted_state.extend(state[0])
+                formatted_state.append(state[1])
+                formatted_state.append(state[2])
+                formatted_state.append(state[3])
+                formatted_state = torch.tensor(formatted_state)
+                # print(state)
+                # print(action)
                 next_state, reward, done, info = self.env.step(action)
                 cumulative_reward += reward
                 reward = torch.tensor([reward])
 
-                self.memory.push(state, action, next_state, reward)
+                formatted_nstate = []
+                formatted_nstate.extend(next_state[0])
+                formatted_nstate.append(next_state[1])
+                formatted_nstate.append(next_state[2])
+                formatted_nstate.append(next_state[3])
+                formatted_nstate = torch.tensor(formatted_nstate)
+
+                self.memory.push(formatted_state, action, formatted_nstate, reward)
                 self.update_model()
 
                 # Observe new state
@@ -167,7 +194,7 @@ class DQNAgent:
                     self.target_network.load_state_dict(
                         self.policy_network.state_dict()
                     )
-
-            rospy.loginfo(f"Episode {episode} reward: {cumulative_reward}")
+            result_str = "Episode " + str(episode) + " reward: " + str(cumulative_reward)
+            rospy.loginfo(result_str)
 
         torch.save(self.target_network.state_dict())

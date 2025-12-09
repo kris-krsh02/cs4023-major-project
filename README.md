@@ -43,3 +43,13 @@ Since we are learning a predefined route to be traversed, how should training be
 https://bitbucket.org/theconstructcore/drone_training/src/master/drone_training/src/myquadcopter_env.py
 
 https://www.theconstruct.ai/using-openai-ros/
+
+### Code sources
+
+https://docs.pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+
+https://docs.pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html
+
+https://github.com/ROBOTIS-GIT/turtlebot3_machine_learning/tree/main/turtlebot3_dqn
+
+https://bitbucket.org/theconstructcore/drone_training/src/master/drone_training

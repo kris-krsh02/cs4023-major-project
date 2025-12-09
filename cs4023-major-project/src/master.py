@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 from dqn import DQNAgent
-import gym, rospy
+import gymnasium as gym
+import rospy
 import touring_env
 
 
@@ -13,3 +16,6 @@ def main():
     agent = DQNAgent(env)
     agent.train(300)
     env.close()
+
+if __name__ == "__main__":
+    main()
