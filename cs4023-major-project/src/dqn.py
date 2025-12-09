@@ -9,9 +9,10 @@ import rospy
 import math
 import random
 import numpy as np
+import csv
 # import matplotlib
 # import matplotlib.pyplot as plt
-from collections import namedtuple
+from collections import namedtuple, deque
 from itertools import count
 # from PIL import Image
 
@@ -30,8 +31,6 @@ class NeuralNetwork(nn.Module):
         )
 
     def forward(self, x):
-        # print(x.shape)
-        # print(x.type())
         x = x.float()
         output = self.linear_relu_stack(x)
         return output
@@ -40,16 +39,11 @@ class NeuralNetwork(nn.Module):
 class ReplayMemory(object):
 
     def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-        self.position = 0
+        self.memory = deque([], maxlen=capacity)
 
     def push(self, *args):
         """Saves a transition."""
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
-        self.position = (self.position + 1) % self.capacity
+        self.memory.append(*args)
 
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
@@ -79,13 +73,14 @@ class DQNAgent:
         self.EPS_START = 0.9
         self.EPS_END = 0.05
         self.EPS_DECAY = 200
-        self.TARGET_UPDATE = 10
+        self.TARGET_UPDATE = 25
 
         # More Params
         self.BATCH_SIZE = 128
         self.GAMMA = 0.999
 
         self.episode_durations = []
+        self.reward_results = []
 
     def get_action(self, state):
         sample = random.random()
@@ -106,7 +101,6 @@ class DQNAgent:
                 action = self.policy_network(formatted_state).max(0)[1].reshape(1, 1)
         else:
             action = torch.tensor([[random.randrange(5)]], device="cpu", dtype=torch.long)
-        print(action.shape)
         return action
 
     def update_model(self):
@@ -122,12 +116,12 @@ class DQNAgent:
             dtype=torch.uint8,
         )
 
-        non_final_next_states = torch.cat(
+        non_final_next_states = torch.stack(
             [s for s in batch.next_state if s is not None]
         )
-        state_batch = torch.cat(batch.state)
+        state_batch = torch.stack(batch.state)
         action_batch = torch.cat(batch.action)
-        reward_batch = torch.cat(batch.reward)
+        reward_batch = torch.stack(batch.reward)
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken
@@ -136,7 +130,7 @@ class DQNAgent:
         # Compute V(s_{t+1}) for all next states.
         next_state_values = torch.zeros(self.BATCH_SIZE, device="cpu")
         next_state_values[non_final_mask] = (
-            self.target_network(non_final_next_states).max(1)[0].detach()
+            self.target_network(non_final_next_states).max(1)[0].detach() 
         )
         # Compute the expected Q values = Bellman Equation
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
@@ -166,8 +160,6 @@ class DQNAgent:
                 formatted_state.append(state[2])
                 formatted_state.append(state[3])
                 formatted_state = torch.tensor(formatted_state)
-                # print(state)
-                # print(action)
                 next_state, reward, done, info = self.env.step(action)
                 cumulative_reward += reward
                 reward = torch.tensor([reward])
@@ -179,7 +171,7 @@ class DQNAgent:
                 formatted_nstate.append(next_state[3])
                 formatted_nstate = torch.tensor(formatted_nstate)
 
-                self.memory.push(formatted_state, action, formatted_nstate, reward)
+                self.memory.push([formatted_state, action, formatted_nstate, reward])
                 self.update_model()
 
                 # Observe new state
@@ -194,7 +186,13 @@ class DQNAgent:
                     self.target_network.load_state_dict(
                         self.policy_network.state_dict()
                     )
-            result_str = "Episode " + str(episode) + " reward: " + str(cumulative_reward)
+            
+            result_str = str(episode) + ", " + str(cumulative_reward)
             rospy.loginfo(result_str)
+            self.reward_results.append([episode, cumulative_reward])
 
+        with open('results.csv', 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Episode', 'Reward'])
+            writer.writerow(self.reward_results)
         torch.save(self.target_network.state_dict())

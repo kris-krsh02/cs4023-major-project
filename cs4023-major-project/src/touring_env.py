@@ -14,6 +14,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Point
+from std_msgs.msg import Empty
 from nav_msgs.msg import Odometry
 from gazebo_connection import GazeboConnection
 from scipy.spatial.transform import Rotation
@@ -32,6 +33,8 @@ class TurtlebotTouringEnv(gym.Env):
         self.vel_pub = rospy.Publisher(
             "/cmd_vel_mux/input/navi", Twist, queue_size=1
         )  # TODO: Revisit queue size
+
+        self.odom_pub = rospy.Publisher("mobile_base/commands/reset_odometry", Empty, queue_size=10)
 
         # TODO: How to implement and enumerate Pose goals here?
         # need to come up with the sequential logic
@@ -86,6 +89,7 @@ class TurtlebotTouringEnv(gym.Env):
         self.gazebo.resetSim()
         # output = subprocess.run(["roslaunch", "cs4023-major-project", "fake_scanner.launch"], capture_output=True, text=True)
         # print(output)
+        self.odom_pub.publish(Empty())
         self.gazebo.unpauseSim()
 
         # TODO: Reset robot conditions
@@ -104,19 +108,23 @@ class TurtlebotTouringEnv(gym.Env):
 
         vel_cmd = Twist()
         if action == 0:  # Fast Left
-            vel_cmd.linear.x = self.linear_velocity
+            vel_cmd.linear.x = self.linear_velocity * 0.85
+            # vel_cmd.linear.x = 0
             vel_cmd.angular.z = self.fl_angular
         elif action == 1:  # Slow Left
-            vel_cmd.linear.x = self.linear_velocity
+            vel_cmd.linear.x = self.linear_velocity * 0.7
+            # vel_cmd.linear.x = 0
             vel_cmd.angular.z = self.sl_angular
         elif action == 2:  # Forward
-            vel_cmd.linear.x = self.linear_velocity
+            vel_cmd.linear.x = self.linear_velocity 
             vel_cmd.angular.z = 0.0
         elif action == 3:  # Slow Right
-            vel_cmd.linear.x = self.linear_velocity
-            vel_cmd.angular.z = self.sr_angular
+            vel_cmd.linear.x = self.linear_velocity * 0.85
+            # vel_cmd.linear.x = 0
+            vel_cmd.angular.z = self.sr_angular 
         elif action == 4:  # Fast Right
-            vel_cmd.linear.x = self.linear_velocity
+            vel_cmd.linear.x = self.linear_velocity * 0.7
+            # vel_cmd.linear.x = 0
             vel_cmd.angular.z = self.fr_angular
 
         self.gazebo.unpauseSim()
@@ -136,12 +144,16 @@ class TurtlebotTouringEnv(gym.Env):
 
     def take_observation(self):
         # LaserScan data
+        retry_counter = 0
         scan_ranges = None
         while scan_ranges is None:
             try:
                 scan_ranges = rospy.wait_for_message("/scan", LaserScan, timeout=5)
             except:
                 rospy.loginfo("LaserScan has no data, retrying...")
+            retry_counter += 1
+            if retry_counter > 5:
+                break
 
         # Bumper data
         collision = 0
@@ -157,16 +169,19 @@ class TurtlebotTouringEnv(gym.Env):
 
         # Distance to goal and Heading angle
         pose = None
+        retry_counter = 0
         while pose is None:
             try:
                 pose = rospy.wait_for_message("/odom", Odometry, timeout=5).pose
             except:
                 rospy.loginfo("Odometer has no data, retrying...")
+            retry_counter += 1
+            if retry_counter > 5:
+                break
 
         scan_ranges = self.process_scan_ranges(scan_ranges)
         distance = self.calculate_distance(pose.pose.position, self.curr_goal)
         heading_angle = self.calculate_heading_angle(pose)
-
         return (scan_ranges, collision, distance, heading_angle)
 
     def process_scan_ranges(self, scan_ranges):
