@@ -23,7 +23,6 @@ from scipy.spatial.transform import Rotation
 reg = register(
     id="Turtlebot3Touring",
     entry_point="touring_env:TurtlebotTouringEnv",
-    # timestep_limit=300,  # TODO: timestep might be too big/too little
 )
 
 
@@ -80,15 +79,7 @@ class TurtlebotTouringEnv(gym.Env):
 
         :param self: Description
         """
-
-        # output = subprocess.run(["rosnode", "kill", "/depthimage_to_laserscan"], capture_output=True, text=True)
-        # print(output)
-        # output = subprocess.run(["rosnode", "kill", "/laserscan_nodelet_manager"], capture_output=True, text=True)
-        # print(output)
-
         self.gazebo.resetSim()
-        # output = subprocess.run(["roslaunch", "cs4023-major-project", "fake_scanner.launch"], capture_output=True, text=True)
-        # print(output)
         self.odom_pub.publish(Empty())
         self.gazebo.unpauseSim()
 

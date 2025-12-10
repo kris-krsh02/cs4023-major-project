@@ -72,11 +72,11 @@ class DQNAgent:
         # Epsilon values
         self.EPS_START = 0.9
         self.EPS_END = 0.05
-        self.EPS_DECAY = 200
-        self.TARGET_UPDATE = 25
+        self.EPS_DECAY = 50
+        self.TARGET_UPDATE = 20
 
         # More Params
-        self.BATCH_SIZE = 128
+        self.BATCH_SIZE = 10
         self.GAMMA = 0.999
 
         self.episode_durations = []
@@ -113,7 +113,7 @@ class DQNAgent:
         non_final_mask = torch.tensor(
             tuple(map(lambda s: s is not None, batch.next_state)),
             device="cpu",
-            dtype=torch.uint8,
+            dtype=torch.bool,
         )
 
         non_final_next_states = torch.stack(
@@ -121,7 +121,7 @@ class DQNAgent:
         )
         state_batch = torch.stack(batch.state)
         action_batch = torch.cat(batch.action)
-        reward_batch = torch.stack(batch.reward)
+        reward_batch = torch.cat(batch.reward)
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken
@@ -129,9 +129,10 @@ class DQNAgent:
 
         # Compute V(s_{t+1}) for all next states.
         next_state_values = torch.zeros(self.BATCH_SIZE, device="cpu")
-        next_state_values[non_final_mask] = (
-            self.target_network(non_final_next_states).max(1)[0].detach() 
-        )
+
+        with torch.no_grad():
+            next_state_values[non_final_mask] = self.target_network(non_final_next_states).max(1).values
+        
         # Compute the expected Q values = Bellman Equation
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
 
@@ -190,9 +191,9 @@ class DQNAgent:
             result_str = str(episode) + ", " + str(cumulative_reward)
             rospy.loginfo(result_str)
             self.reward_results.append([episode, cumulative_reward])
-
-        with open('results.csv', 'w', newline='') as f:
+	
+        with open("results_5000.csv", 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['Episode', 'Reward'])
             writer.writerow(self.reward_results)
-        torch.save(self.target_network.state_dict())
+        torch.save(self.target_network.state_dict(), "model_5000.pth")
