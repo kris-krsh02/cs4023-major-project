@@ -10,8 +10,8 @@ import math
 import random
 import numpy as np
 import csv
-# import matplotlib
-# import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.pyplot as plt
 from collections import namedtuple, deque
 from itertools import count
 # from PIL import Image
@@ -27,7 +27,7 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(46, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, 5)
+            nn.Linear(27, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, 5)
         )
 
     def forward(self, x):
@@ -58,7 +58,7 @@ class ReplayMemory(object):
 
 
 class DQNAgent:
-    def __init__(self, env):
+    def __init__(self, env, gamma, eps_decay):
         self.env = env
         self.policy_network = NeuralNetwork()
         self.target_network = NeuralNetwork()
@@ -72,15 +72,18 @@ class DQNAgent:
         # Epsilon values
         self.EPS_START = 0.9
         self.EPS_END = 0.05
-        self.EPS_DECAY = 50
+        self.EPS_DECAY = eps_decay
         self.TARGET_UPDATE = 20
 
         # More Params
-        self.BATCH_SIZE = 10
-        self.GAMMA = 0.999
+        self.BATCH_SIZE = 64
+        self.GAMMA = gamma
 
         self.episode_durations = []
-        self.reward_results = []
+        self.cumulative_rewards = []
+        self.all_loss = []
+
+        self.model_name = f"g_{gamma}_eps_{eps_decay}"
 
     def get_action(self, state):
         sample = random.random()
@@ -140,6 +143,7 @@ class DQNAgent:
         loss = F.smooth_l1_loss(
             state_action_values, expected_state_action_values.unsqueeze(1)
         )
+        self.all_loss.append(loss.item())
 
         # Optimize the model
         self.optimizer.zero_grad()
@@ -190,10 +194,61 @@ class DQNAgent:
             
             result_str = str(episode) + ", " + str(cumulative_reward)
             rospy.loginfo(result_str)
-            self.reward_results.append([episode, cumulative_reward])
-	
-        with open("results_5000.csv", 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['Episode', 'Reward'])
-            writer.writerow(self.reward_results)
-        torch.save(self.target_network.state_dict(), "model_5000.pth")
+            self.cumulative_rewards.append(cumulative_reward)
+
+        self.plot_rewards()
+        self.plot_loss()
+        filename = f"models/model_{str(self.GAMMA)[2:]}_{self.EPS_DECAY}.pth"
+        torch.save(self.target_network.state_dict(), filename)
+
+
+    def plot_rewards(self):
+        avg_step = 4
+        num_episodes = list(range(1, len(self.cumulative_rewards) + 1))
+
+        moving_avgs = []
+        for i in range(len(num_episodes)):
+            if i < avg_step:
+                moving_avgs.append(sum(self.cumulative_rewards)/len(self.cumulative_rewards)) 
+            else:
+                moving_avgs.append(sum(self.cumulative_rewards[i-avg_step:i])/avg_step) 
+
+        # plt.plot(num_episodes, self.cumulative_rewards, label='Cumulative Reward')
+        # plt.plot(num_episodes, moving_avgs, label='Average Reward')
+        # plt.xlabel("Episode")
+        # plt.ylabel("Reward")
+        # plt.legend()
+        # plt.title(f"Model Gamma: {self.GAMMA} Eps Decay: {self.EPS_DECAY}")
+        # plt.savefig(f"plots/reward_{str(self.GAMMA)[2:]}_{self.EPS_DECAY}.png")
+        # plt.close()
+
+        with open(f'data/c_reward_{str(self.GAMMA)[2:]}_{self.EPS_DECAY}.csv', 'w', newline='') as f1:
+            data = zip(num_episodes, self.cumulative_rewards)
+            print(num_episodes)
+            print(self.cumulative_rewards)
+            print(data)
+            writer = csv.writer(f1)
+            writer.writerows(data)
+
+        with open(f'data/m_reward_{str(self.GAMMA)[2:]}_{self.EPS_DECAY}.csv', 'w', newline='') as f2:
+            data = zip(num_episodes, moving_avgs)
+            writer = csv.writer(f2)
+            writer.writerows(data)
+ 
+    def plot_loss(self):
+        num_steps = list(range(1, len(self.all_loss) + 1))
+        plt.plot(num_steps, self.all_loss)
+        plt.xlabel("Episode")
+        plt.ylabel("Loss")
+        plt.title(f"Model Gamma: {self.GAMMA} Eps Decay: {self.EPS_DECAY}")
+        plt.savefig(f"plots/loss_{str(self.GAMMA)[2:]}_{self.EPS_DECAY}.png")
+
+        with open(f'data/c_reward_{str(self.GAMMA)[2:]}_{self.EPS_DECAY}.csv', 'w', newline='') as f3:
+            data = zip(num_steps, self.all_loss)
+            writer = csv.writer(f3)
+            writer.writerows(data)
+
+        plt.close()
+
+
+

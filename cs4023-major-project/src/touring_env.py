@@ -56,7 +56,7 @@ class TurtlebotTouringEnv(gym.Env):
 
         # Initialize action space: 5 angular velocities with constant linear velocity
         self.action_space = spaces.Discrete(5)
-        self.observation_space = spaces.Tuple((Box(low=0,high=10,shape=(43,),dtype=np.float32), Discrete(2), Box(low=0,high=10,dtype=np.float32), Box(low=0,high=360)))
+        self.observation_space = spaces.Tuple((Box(low=0,high=10,shape=(24,),dtype=np.float32), Discrete(2), Box(low=0,high=10,dtype=np.float32), Box(low=0,high=360)))
 
         # No reward bounds
         self.reward_range = (-np.inf, np.inf)
@@ -179,7 +179,8 @@ class TurtlebotTouringEnv(gym.Env):
         filtered_scan_ranges = []
         scan_angles = []
 
-        for i in range(0, len(scan_ranges.ranges), 15):
+        # 24 equally spaced readings
+        for i in range(0, len(scan_ranges.ranges), 27):
             if math.isnan(scan_ranges.ranges[i]):
                 filtered_scan_ranges.append(10.0)
             else:
