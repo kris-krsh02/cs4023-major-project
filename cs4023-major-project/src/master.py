@@ -13,8 +13,8 @@ def main():
     env = gym.make("Turtlebot3Touring")
     rospy.loginfo("Gym environment created")
 
-    agent = DQNAgent(env)
-    agent.train(100)
+    agent = DQNAgent(env, 0.99, 50)
+    agent.train(5)
     env.close()
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-linear_velocity: 1.0
+linear_velocity: 0.6
 fast_right_angular_velocity: -0.75
 fast_left_angular_velocity: 0.75
 slow_right_angular_velocity: -0.25
