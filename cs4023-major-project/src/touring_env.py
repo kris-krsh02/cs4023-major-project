@@ -124,8 +124,8 @@ class TurtlebotTouringEnv(gym.Env):
         data = self.take_observation()
         self.gazebo.pauseSim()
 
-        reward, done = self.calculate_reward(data)
-        return data, reward, done, {}
+        reward, done, success = self.calculate_reward(data)
+        return data, reward, done, success, {}
 
     def reset_robot(self):
         vel_cmd = Twist()
@@ -198,6 +198,7 @@ class TurtlebotTouringEnv(gym.Env):
         :param data: scan_range, collision, distance, heading_angle
         """
         done = False
+        success = False
 
         if data[1]:  # collision detection
             done = True
@@ -205,6 +206,7 @@ class TurtlebotTouringEnv(gym.Env):
 
         elif data[2] <= self.goal_threshold:  # within range of goal
             done = True
+            success = True
             reward = 100.0
 
         else:
@@ -212,7 +214,7 @@ class TurtlebotTouringEnv(gym.Env):
             obstacle_reward = self.calculate_weighted_obstacle_reward(data[0], self.scan_angles)
             reward = angle_reward + obstacle_reward
 
-        return reward, done
+        return reward, done, success
 
     def calculate_weighted_obstacle_reward(self, scan_ranges, scan_angles):
         scan_ranges = np.array(scan_ranges)

@@ -14,7 +14,7 @@ def main():
     rospy.loginfo("Gym environment created")
 
     agent = DQNAgent(env, 0.99, 50)
-    agent.train(5)
+    agent.train(100)
     env.close()
 
 if __name__ == "__main__":
