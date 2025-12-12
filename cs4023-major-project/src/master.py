@@ -8,9 +8,9 @@ import touring_env
 
 def main():
     # Training parameters
-    gammas = [0.99,]
-    epsilons = [50,]
-    num_episodes = 20
+    gammas = [0.9, 0]
+    epsilons = [50, 200]
+    num_episodes = 200
 
     # Iniialize master node
     rospy.init_node("master_node", anonymous=True)
