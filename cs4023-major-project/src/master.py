@@ -7,14 +7,25 @@ import touring_env
 
 
 def main():
+    # Training parameters
+    gammas = [0.99,]
+    epsilons = [50,]
+    num_episodes = 20
+
+    # Iniialize master node
     rospy.init_node("master_node", anonymous=True)
 
     # Create environment
     env = gym.make("Turtlebot3Touring")
     rospy.loginfo("Gym environment created")
 
-    agent = DQNAgent(env, 0.99, 50)
-    agent.train(100)
+    # Run trainings over parameters
+    for gamma in gammas:
+        for eps in epsilons:
+            agent = DQNAgent(env, gamma, eps)
+            agent.train(num_episodes)
+    
+    # Close the environment
     env.close()
 
 if __name__ == "__main__":

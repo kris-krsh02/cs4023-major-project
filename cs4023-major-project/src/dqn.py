@@ -87,7 +87,7 @@ class DQNAgent:
         self.model_name = f"g_{gamma}_eps_{eps_decay}"
 
         # Window size for moving averages
-        self.window_size = 20
+        self.window_size = 10
 
     def get_action(self, state):
         sample = random.random()
@@ -209,125 +209,69 @@ class DQNAgent:
             self.cumulative_rewards.append(cumulative_reward)
 
         # Save metrics and generate plots
-        self.plot_rewards()
-        self.plot_loss()
-        self.plot_num_steps()
-        self.plot_success()
-        filename = f"models/model_{str(self.GAMMA)[0:]}_{self.EPS_DECAY}.pth"
-        torch.save(self.target_network.state_dict(), filename)
+        self.plot_param(self.cumulative_rewards, "Cumulative Reward", window_size = self.window_size)
+        self.plot_param(self.all_loss, "Loss", abscissa=1)
+        self.plot_param(self.episode_steps, "Number of Steps", window_size = self.window_size)
 
-
-    # Generate plots and csv for rewards metrics
-    def plot_rewards(self):
-        # episode_numbers: 1-indexed list of episode indices
-        episode_numbers = list(range(1, len(self.cumulative_rewards) + 1))
-
-        # Calculate moving averages, #1-indexed
-        moving_avgs = []
-        for i in episode_numbers:
-            if i < self.window_size:
-                # average the first i rewards
-                moving_avgs.append(sum(self.cumulative_rewards[0:i])/(i)) 
-            else:
-                # average the last 'window_size' number of rewards
-                moving_avgs.append(sum(self.cumulative_rewards[i-self.window_size:i])/self.window_size) 
-
-        # Plot cumulative reward and moving average reward
-        plt.plot(episode_numbers, self.cumulative_rewards, label='Cumulative Reward')
-        plt.plot(episode_numbers, moving_avgs, label='Average Reward')
-        plt.xlabel("Episode")
-        plt.ylabel("Reward")
-        plt.legend()
-        plt.title(f"Model Gamma: {self.GAMMA} Eps Decay: {self.EPS_DECAY}")
-        plt.savefig(f"plots/reward_{str(self.GAMMA)}_{self.EPS_DECAY}.png")
-        plt.close()
-
-        # Save cumulative reward
-        with open(f'data/c_reward_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
-            data = zip(episode_numbers, self.cumulative_rewards)
-            writer = csv.writer(f)
-            writer.writerows(data)
-
-        # Save moving average reward
-        with open(f'data/m_reward_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
-            data = zip(episode_numbers, moving_avgs)
-            writer = csv.writer(f)
-            writer.writerows(data)
- 
-    # Generate plots and csv for loss metric
-    def plot_loss(self):
-        num_steps = list(range(1, len(self.all_loss) + 1))
-        plt.plot(num_steps, self.all_loss)
-        plt.xlabel("Step")
-        plt.ylabel("Loss")
-        plt.title(f"Model Gamma: {self.GAMMA} Eps Decay: {self.EPS_DECAY}")
-        plt.savefig(f"plots/loss_{str(self.GAMMA)}_{self.EPS_DECAY}.png")
-        plt.close()
-
-        with open(f'data/loss_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
-            data = zip(num_steps, self.all_loss)
-            writer = csv.writer(f)
-            writer.writerows(data)
-
-    # Generate plots and save num steps metric
-    def plot_num_steps(self):
-        # episode_numbers: 1-indexed list of episode indices
-        episode_numbers = list(range(1, len(self.episode_steps) + 1))
-
-        # Calculate moving averages, #1-indexed
-        moving_avgs = []
-        for i in episode_numbers:
-            if i < self.window_size:
-                # average the first i num steps
-                moving_avgs.append(sum(self.episode_steps[0:i])/(i)) 
-            else:
-                # average the last 'window_size' number of num steps
-                moving_avgs.append(sum(self.episode_steps[i-self.window_size:i])/self.window_size) 
-
-        # Plot num steps and moving average num steps
-        plt.plot(episode_numbers, self.episode_steps, label='Episode Steps')
-        plt.plot(episode_numbers, moving_avgs, label='Average Steps')
-        plt.xlabel("Episode")
-        plt.ylabel("Number of Steps")
-        plt.legend()
-        plt.title(f"Model Gamma: {self.GAMMA} Eps Decay: {self.EPS_DECAY}")
-        plt.savefig(f"plots/num_steps_{str(self.GAMMA)}_{self.EPS_DECAY}.png")
-        plt.close()
-
-        # Save num steps
-        with open(f'data/c_num_steps_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
-            data = zip(episode_numbers, self.episode_steps)
-            writer = csv.writer(f)
-            writer.writerows(data)
-
-        # Save moving average num steps
-        with open(f'data/m_num_steps_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
-            data = zip(episode_numbers, moving_avgs)
-            writer = csv.writer(f)
-            writer.writerows(data)
-
-    # Generate plots and save success rate metric
-    def plot_success(self):
-        # episode_numbers: 1-indexed list of episode indices
-        episode_numbers = list(range(1, len(self.outcomes) + 1))
-        
         # Calculate success rates
         num_success = 0
         success_rates = []
-        for i in episode_numbers:
+        for i in list(range(1, len(self.outcomes) + 1)):
             num_success += self.outcomes[i-1]
             success_rates.append(num_success/i)
 
-        # Plot success rates
-        plt.plot(episode_numbers, success_rates, label='Success Rate')
-        plt.xlabel("Episode")
-        plt.ylabel("Success Rate")
-        plt.title(f"Model Gamma: {self.GAMMA} Eps Decay: {self.EPS_DECAY}")
-        plt.savefig(f"plots/success_rate_{str(self.GAMMA)}_{self.EPS_DECAY}.png")
+        #Save success rates and generate plot
+        self.plot_param(success_rates, "Success Rate", window_size = self.window_size)
+
+        filename = f"models/model_{str(self.GAMMA)}_{self.EPS_DECAY}.pth"
+        torch.save(self.target_network.state_dict(), filename)
+
+    # metric: variable to plot
+    # metric_name: string
+    # abscissa: 0 to plot over episodes, else to plot ove steps
+    # window_size: number of terms in moving average
+    def plot_param(self, metric, metric_name, abscissa = 0, window_size = 0):
+        x_values = list(range(1, len(metric) + 1))
+
+        # Define the x-axis label
+        x_label = "Episodes"
+        if abscissa is not 0:
+            x_label = "Steps"                       
+        
+        #Calculate moving averages
+        moving_avgs = []
+        if window_size is not 0:
+            for i in x_values: 
+                if i < window_size:
+                    # average the first i values
+                    moving_avgs.append(sum(metric[0:i])/(i))
+                else:
+                    # average the most recent window_size values
+                    moving_avgs.append(sum(metric[i-window_size:i])/window_size)
+
+        # Remove whitespace
+        short_metric_name = metric_name.replace(" ","")
+
+        # Plot metric and moving average
+        plt.plot(x_values, metric, label = f"{metric_name}")
+        if abscissa is 0:
+            plt.plot(x_values, moving_avgs, label = f"Average {metric_name} (n={window_size})")
+        plt.xlabel(x_label)
+        plt.ylabel(metric_name)
+        plt.legend(loc = 'upper left')
+        plt.title(f"Model \u03B3 = {self.GAMMA}, \u03B5_decay = {self.EPS_DECAY}")
+        plt.savefig(f"plots/{short_metric_name}_{str(self.GAMMA)}_{str(self.EPS_DECAY)}.png")
         plt.close()
 
-        # Save success rates
-        with open(f'data/success_rates_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
-            data = zip(episode_numbers, success_rates)
-            writer = csv.writer(f)
+        # Save metric
+        with open(f'data/{short_metric_name}_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
+            data = zip(x_values, metric)
+            writer=csv.writer(f)
             writer.writerows(data)
+
+        # Save moving average
+        if abscissa is 0:
+            with open(f'data/avg_{short_metric_name}_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
+                data = zip(x_values, moving_avgs)
+                writer=csv.writer(f)
+                writer.writerows(data)        
