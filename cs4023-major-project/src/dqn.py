@@ -83,8 +83,8 @@ class DQNAgent:
         self.cumulative_rewards = []
         self.all_loss = []
         self.outcomes = []
-        self.all_avg_rewards = []
-        self.all_avg_steps = []
+        self.mv_avg_rewards = None
+        self.mv_avg_steps = None
 
         self.model_name = f"g_{gamma}_eps_{eps_decay}"
 
@@ -224,11 +224,12 @@ class DQNAgent:
 
         #Save success rates and generate plot
         self.plot_param(success_rates, "Success Rate", window_size = self.window_size)
-        self.plot_param_avgs(self.all_avg_rewards, "Avg Reward")
-        self.plot_param_avgs(self.all_avg_steps, "Avg Steps")
+       # self.plot_param_avgs(self.all_avg_rewards, "Avg Reward")
+       # self.plot_param_avgs(self.all_avg_steps, "Avg Steps")
 
         filename = f"models/model_{str(self.GAMMA)}_{self.EPS_DECAY}.pth"
         torch.save(self.target_network.state_dict(), filename)
+        return self.mv_avg_rewards, self.mv_avg_steps
 
     # metric: variable to plot
     # metric_name: string
@@ -269,9 +270,9 @@ class DQNAgent:
 
         avg_key = f"\u03B3 = {str(self.GAMMA)}, \u03B5_decay = {self.EPS_DECAY}"
         if metric is "Cumulative Reward":
-            self.all_avg_rewards[avg_key] = moving_avgs
+            self.all_avg_rewards = moving_avgs
         elif metric is "Number of Steps":
-            self.all_avg_steps[avg_key] = moving_avgs
+            self.all_avg_steps = moving_avgs
 
         # Save metric
         with open(f'data/{short_metric_name}_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
@@ -286,7 +287,7 @@ class DQNAgent:
                 writer=csv.writer(f)
                 writer.writerows(data)  
 
-    def plot_param_avgs(self, metric, metric_name, abscissa = 0):
+    def plot_param_avgs(self):
         # Iterate through all averages:
         for key, values in metric.items():
             plt.plot(values, label = key)
