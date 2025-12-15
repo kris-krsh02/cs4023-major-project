@@ -83,6 +83,8 @@ class DQNAgent:
         self.cumulative_rewards = []
         self.all_loss = []
         self.outcomes = []
+        self.all_avg_rewards = []
+        self.all_avg_steps = []
 
         self.model_name = f"g_{gamma}_eps_{eps_decay}"
 
@@ -222,6 +224,8 @@ class DQNAgent:
 
         #Save success rates and generate plot
         self.plot_param(success_rates, "Success Rate", window_size = self.window_size)
+        self.plot_param_avgs(self.all_avg_rewards, "Avg Reward")
+        self.plot_param_avgs(self.all_avg_steps, "Avg Steps")
 
         filename = f"models/model_{str(self.GAMMA)}_{self.EPS_DECAY}.pth"
         torch.save(self.target_network.state_dict(), filename)
@@ -247,7 +251,7 @@ class DQNAgent:
                     moving_avgs.append(sum(metric[0:i])/(i))
                 else:
                     # average the most recent window_size values
-                    moving_avgs.append(sum(metric[i-window_size:i])/window_size)
+                    moving_avgs.append(sum(metric[i-window_size:i])/window_size)                    
 
         # Remove whitespace
         short_metric_name = metric_name.replace(" ","")
@@ -263,6 +267,12 @@ class DQNAgent:
         plt.savefig(f"plots/{short_metric_name}_{str(self.GAMMA)}_{str(self.EPS_DECAY)}.png")
         plt.close()
 
+        avg_key = f"\u03B3 = {str(self.GAMMA)}, \u03B5_decay = {self.EPS_DECAY}"
+        if metric is "Cumulative Reward":
+            self.all_avg_rewards[avg_key] = moving_avgs
+        elif metric is "Number of Steps":
+            self.all_avg_steps[avg_key] = moving_avgs
+
         # Save metric
         with open(f'data/{short_metric_name}_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
             data = zip(x_values, metric)
@@ -274,4 +284,17 @@ class DQNAgent:
             with open(f'data/avg_{short_metric_name}_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:
                 data = zip(x_values, moving_avgs)
                 writer=csv.writer(f)
-                writer.writerows(data)        
+                writer.writerows(data)  
+
+    def plot_param_avgs(self, metric, metric_name, abscissa = 0):
+        # Iterate through all averages:
+        for key, values in metric.items():
+            plt.plot(values, label = key)
+            plt.xlabel = "Episodes"
+            plt.ylabel = metric_name
+
+        plt.legend(loc = 'upper left')
+        plt.title(f"Comparison of Average {metric_name} (n={self.window_size})")
+        plt.savefig(f"plots/{metric_name}_comparison.png")
+        plt.close()
+        
