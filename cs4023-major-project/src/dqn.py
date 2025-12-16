@@ -81,11 +81,15 @@ class DQNAgent:
         # Window size for moving averages
         self.window_size = 30
 
-    def get_action(self, state):
-        sample = random.random()
-        eps_threshold = self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(
+    def get_action(self, state, inference = False):
+        sample = 100
+        if inference:
+            eps_threshold = float('-inf')
+        else: 
+            sample = random.random()
+            eps_threshold = self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(
             -1.0 * self.steps_done / self.EPS_DECAY
-        )
+            )
         action=None
 
         self.steps_done += 1
@@ -149,13 +153,14 @@ class DQNAgent:
         self.optimizer.step()
 
     def inference(self, model_name):
-        self.policy_network = torch.load(model_name)
+        self.policy_network.load_state_dict(torch.load(model_name))
         self.policy_network.eval()
+        self.env.reset()
         state, _ = self.env.reset()
         outcome = "FAIL"
         for t in count():
             # Select and perform an action
-            action = self.get_action(state)
+            action = self.get_action(state, True)
             formatted_state = []
             formatted_state.extend(state[0])
             formatted_state.append(state[1])
@@ -163,7 +168,7 @@ class DQNAgent:
             formatted_state.append(state[3])
             formatted_state = torch.tensor(formatted_state)
             next_state, reward, done, success, info = self.env.step(action)
-            cumulative_reward += reward
+            #cumulative_reward += reward
 
             formatted_nstate = []
             formatted_nstate.extend(next_state[0])
@@ -187,7 +192,7 @@ class DQNAgent:
                 outcome = "EXCEEDED 50 STEPS"
                 break
 
-            rospy.loginfo(outcome, cumulative_reward)
+        rospy.loginfo(outcome)
 
     def train(self, num_episodes):
         for episode in range(1, num_episodes + 1):
@@ -240,6 +245,9 @@ class DQNAgent:
 
             rospy.loginfo(result_str)
             self.cumulative_rewards.append(cumulative_reward)
+            #result_str = outcome
+            #rospy.loginfo(result_str)
+            #self.cumulative_rewards.append(cumulative_reward)
 
         # Save metrics and generate plots
         self.plot_param(self.cumulative_rewards, "Cumulative Reward", window_size = self.window_size)

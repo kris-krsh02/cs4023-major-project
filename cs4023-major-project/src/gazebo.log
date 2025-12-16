@@ -15883,3 +15883,103 @@ Laser Pose= 1.56667 0.605464 0.704597
 Registering Scans:Done
 Laser Pose= 1.92757 0.943715 0.426942
 Registering Scans:Done
+[31m[gazebo-1] process has died [pid 25846, exit code -15, cmd /opt/ros/melodic/lib/gazebo_ros/gzserver -e ode /home/kars0009/catkin_ws/src/cs4023-major-project/cs4023-major-project/world/Square_world.world __name:=gazebo __log:=/home/kars0009/.ros/log/8b888744-da03-11f0-a995-e454e8942fb9/gazebo-1.log].
+log file: /home/kars0009/.ros/log/8b888744-da03-11f0-a995-e454e8942fb9/gazebo-1*.log[0m
+virtual GMapping::GridSlamProcessor::~GridSlamProcessor(): Start
+virtual GMapping::GridSlamProcessor::~GridSlamProcessor(): Deleting tree
+... logging to /home/kars0009/.ros/log/8b888744-da03-11f0-a995-e454e8942fb9/roslaunch-robotics10-25807.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;/home/kars0009/catkin_ws/src/cs4023-major-project/cs4023-major-project/launch/launch.launch
+[1mstarted roslaunch server http://robotics10:36553/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /bumper2pointcloud/pointcloud_radius: 0.24
+ * /cmd_vel_mux/yaml_cfg_file: /home/kars0009/ca...
+ * /depthimage_to_laserscan/output_frame_id: /camera_depth_frame
+ * /depthimage_to_laserscan/range_min: 0.45
+ * /depthimage_to_laserscan/scan_height: 10
+ * /fast_left_angular_velocity: 0.75
+ * /fast_right_angular_velocity: -0.75
+ * /gazebo/enable_ros_network: True
+ * /goal_thres: 0.5
+ * /linear_velocity: 0.6
+ * /obstacle_thres: 0.5
+ * /robot_description: <?xml version="1....
+ * /robot_state_publisher/publish_frequency: 30.0
+ * /rosdistro: melodic
+ * /rosversion: 1.14.13
+ * /running_step: 0.3
+ * /slam_gmapping/angularUpdate: 0.436
+ * /slam_gmapping/astep: 0.05
+ * /slam_gmapping/base_frame: base_footprint
+ * /slam_gmapping/delta: 0.05
+ * /slam_gmapping/iterations: 5
+ * /slam_gmapping/kernelSize: 1
+ * /slam_gmapping/lasamplerange: 0.005
+ * /slam_gmapping/lasamplestep: 0.005
+ * /slam_gmapping/linearUpdate: 0.5
+ * /slam_gmapping/llsamplerange: 0.01
+ * /slam_gmapping/llsamplestep: 0.01
+ * /slam_gmapping/lsigma: 0.075
+ * /slam_gmapping/lskip: 0
+ * /slam_gmapping/lstep: 0.05
+ * /slam_gmapping/map_update_interval: 5.0
+ * /slam_gmapping/maxRange: 8.0
+ * /slam_gmapping/maxUrange: 6.0
+ * /slam_gmapping/minimumScore: 200
+ * /slam_gmapping/odom_frame: odom
+ * /slam_gmapping/ogain: 3.0
+ * /slam_gmapping/particles: 80
+ * /slam_gmapping/resampleThreshold: 0.5
+ * /slam_gmapping/sigma: 0.05
+ * /slam_gmapping/srr: 0.01
+ * /slam_gmapping/srt: 0.02
+ * /slam_gmapping/str: 0.01
+ * /slam_gmapping/stt: 0.02
+ * /slam_gmapping/temporalUpdate: -1.0
+ * /slam_gmapping/xmax: 1.0
+ * /slam_gmapping/xmin: -1.0
+ * /slam_gmapping/ymax: 1.0
+ * /slam_gmapping/ymin: -1.0
+ * /slow_left_angular_velocity: 0.25
+ * /slow_right_angular_velocity: -0.25
+ * /use_sim_time: True
+
+NODES
+  /
+    bumper2pointcloud (nodelet/nodelet)
+    cmd_vel_mux (nodelet/nodelet)
+    depthimage_to_laserscan (nodelet/nodelet)
+    gazebo (gazebo_ros/gzserver)
+    laserscan_nodelet_manager (nodelet/nodelet)
+    mobile_base_nodelet_manager (nodelet/nodelet)
+    robot_state_publisher (robot_state_publisher/robot_state_publisher)
+    slam_gmapping (gmapping/slam_gmapping)
+    spawn_turtlebot_model (gazebo_ros/spawn_model)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/home/kars0009/catkin_ws/src/cs4023-major-project/cs4023-major-project/launch/launch.launch http://localhost:11311
+[1mprocess[gazebo-1]: started with pid [25846][0m
+[1mprocess[spawn_turtlebot_model-2]: started with pid [25851][0m
+[1mprocess[mobile_base_nodelet_manager-3]: started with pid [25852][0m
+[1mprocess[cmd_vel_mux-4]: started with pid [25853][0m
+[1mprocess[bumper2pointcloud-5]: started with pid [25854][0m
+[1mprocess[robot_state_publisher-6]: started with pid [25855][0m
+[1mprocess[laserscan_nodelet_manager-7]: started with pid [25860][0m
+[1mprocess[depthimage_to_laserscan-8]: started with pid [25866][0m
+[1mprocess[slam_gmapping-9]: started with pid [25868][0m
+[slam_gmapping-9] killing on exit
+[depthimage_to_laserscan-8] killing on exit
+[laserscan_nodelet_manager-7] killing on exit
+[robot_state_publisher-6] killing on exit
+[bumper2pointcloud-5] killing on exit
+[mobile_base_nodelet_manager-3] killing on exit
+[cmd_vel_mux-4] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
