@@ -1,7 +1,4 @@
-### This is for prototyping purposes, not full DDQN
-### I want to test if the env works before starting with the complicated model
 #!/usr/bin/env python3
-
 
 import torch
 import gymnasium as gym
@@ -14,7 +11,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 from collections import namedtuple, deque
 from itertools import count
-# from PIL import Image
 
 import torch.nn as nn
 import torch.optim as optim
@@ -51,12 +47,6 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-
-# TODO: Add evalutaion metrics
-# Total award per episode
-# Success rate
-
-
 class DQNAgent:
     def __init__(self, env, gamma, eps_decay):
         self.env = env
@@ -89,7 +79,7 @@ class DQNAgent:
         self.model_name = f"g_{gamma}_eps_{eps_decay}"
 
         # Window size for moving averages
-        self.window_size = 10
+        self.window_size = 30
 
     def get_action(self, state):
         sample = random.random()
@@ -269,10 +259,12 @@ class DQNAgent:
         plt.close()
 
         avg_key = f"\u03B3 = {str(self.GAMMA)}, \u03B5_decay = {self.EPS_DECAY}"
-        if metric is "Cumulative Reward":
-            self.all_avg_rewards = moving_avgs
-        elif metric is "Number of Steps":
-            self.all_avg_steps = moving_avgs
+        if metric_name == "Cumulative Reward":
+            print("moving avg reward", moving_avgs)
+            self.mv_avg_rewards = moving_avgs
+        elif metric_name ==  "Number of Steps":
+            self.mv_avg_steps = moving_avgs
+        print(metric_name)
 
         # Save metric
         with open(f'data/{short_metric_name}_{str(self.GAMMA)}_{self.EPS_DECAY}.csv', 'w', newline='') as f:

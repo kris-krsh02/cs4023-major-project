@@ -16,16 +16,16 @@ def plot_param_avgs(metric, metric_name):
             plt.ylabel = metric_name
 
         plt.legend(loc = 'upper left')
-        plt.title(f"Comparison of Average {metric_name} (n={self.window_size})")
+        plt.title(f"Comparison of Average {metric_name}")
         plt.savefig(f"plots/{metric_name}_comparison.png")
         plt.close()
 
 
 def main():
     # Training parameters
-    gammas = [0.9, 0]
-    epsilons = [50]
-    num_episodes = 12
+    gammas = [0.9, 0.5, 0]
+    epsilons = [50, 200]
+    num_episodes = 300
 
     # Result variables
     all_avg_reward = {}
@@ -41,6 +41,7 @@ def main():
     # Run trainings over parameters
     for gamma in gammas:
         for eps in epsilons:
+            print(f"Model \u03B3 = {gamma}, \u03B5_decay = {eps}")
             avg_key = f"\u03B3 = {gamma}, \u03B5_decay = {eps}"
             agent = DQNAgent(env, gamma, eps)
             all_avg_reward[avg_key], all_avg_steps[avg_key] =  agent.train(num_episodes)
