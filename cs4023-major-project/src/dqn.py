@@ -48,7 +48,7 @@ class ReplayMemory(object):
         return len(self.memory)
 
 class DQNAgent:
-    def __init__(self, env, gamma, eps_decay):
+    def __init__(self, env, gamma = None, eps_decay = None):
         self.env = env
         self.policy_network = NeuralNetwork()
         self.target_network = NeuralNetwork()
@@ -131,7 +131,7 @@ class DQNAgent:
 
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_network(non_final_next_states).max(1).values
-        
+
         # Compute the expected Q values = Bellman Equation
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
 
@@ -147,6 +147,47 @@ class DQNAgent:
         for param in self.policy_network.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
+
+    def inference(self, model_name):
+        self.policy_network = torch.load(model_name)
+        self.policy_network.eval()
+        state, _ = self.env.reset()
+        outcome = "FAIL"
+        for t in count():
+            # Select and perform an action
+            action = self.get_action(state)
+            formatted_state = []
+            formatted_state.extend(state[0])
+            formatted_state.append(state[1])
+            formatted_state.append(state[2])
+            formatted_state.append(state[3])
+            formatted_state = torch.tensor(formatted_state)
+            next_state, reward, done, success, info = self.env.step(action)
+            cumulative_reward += reward
+
+            formatted_nstate = []
+            formatted_nstate.extend(next_state[0])
+            formatted_nstate.append(next_state[1])
+            formatted_nstate.append(next_state[2])
+            formatted_nstate.append(next_state[3])
+            formatted_nstate = torch.tensor(formatted_nstate)
+
+            # Observe new state
+            if not done:
+                state = next_state
+            else:
+                self.episode_steps.append(t + 1)
+                if success:
+                    outcome = "SUCCESS"
+                else:
+                    break
+                break
+
+            if t > 50:
+                outcome = "EXCEEDED 50 STEPS"
+                break
+
+            rospy.loginfo(outcome, cumulative_reward)
 
     def train(self, num_episodes):
         for episode in range(1, num_episodes + 1):
@@ -194,7 +235,7 @@ class DQNAgent:
                     self.target_network.load_state_dict(
                         self.policy_network.state_dict()
                     )
-            
+
             result_str = "EPISODE " + str(episode).zfill(4) + " " + outcome + ": " + str(cumulative_reward) + ", " + str(self.episode_steps[-1])
 
             rospy.loginfo(result_str)
@@ -212,10 +253,10 @@ class DQNAgent:
             num_success += self.outcomes[i-1]
             success_rates.append(num_success/i)
 
-        #Save success rates and generate plot
+        # Save success rates and generate plot
         self.plot_param(success_rates, "Success Rate", window_size = self.window_size)
-       # self.plot_param_avgs(self.all_avg_rewards, "Avg Reward")
-       # self.plot_param_avgs(self.all_avg_steps, "Avg Steps")
+        # self.plot_param_avgs(self.all_avg_rewards, "Avg Reward")
+        # self.plot_param_avgs(self.all_avg_steps, "Avg Steps")
 
         filename = f"models/model_{str(self.GAMMA)}_{self.EPS_DECAY}.pth"
         torch.save(self.target_network.state_dict(), filename)
@@ -232,8 +273,8 @@ class DQNAgent:
         x_label = "Episodes"
         if abscissa is not 0:
             x_label = "Steps"                       
-        
-        #Calculate moving averages
+
+        # Calculate moving averages
         moving_avgs = []
         if window_size is not 0:
             for i in x_values: 
@@ -290,4 +331,3 @@ class DQNAgent:
         plt.title(f"Comparison of Average {metric_name} (n={self.window_size})")
         plt.savefig(f"plots/{metric_name}_comparison.png")
         plt.close()
-        
