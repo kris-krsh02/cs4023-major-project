@@ -79,7 +79,7 @@ class DQNAgent:
         self.model_name = f"g_{gamma}_eps_{eps_decay}"
 
         # Window size for moving averages
-        self.window_size = 30
+        self.window_size = 100
 
     def get_action(self, state, inference = False):
         sample = 100
@@ -196,6 +196,7 @@ class DQNAgent:
 
     def train(self, num_episodes):
         for episode in range(1, num_episodes + 1):
+            self.env.reset()
             state, _ = self.env.reset()
             cumulative_reward = 0
             outcome = "FAIL"
