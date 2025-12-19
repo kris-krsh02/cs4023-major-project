@@ -1,55 +1,21 @@
-# Double Deep Q Networks for Robot Local Navigation
+# Deep Q Networks for Robot Local Navigation
 
-TODO:
+This codebase implements a Deep Q network that learns from the environment to lead the robot to a single goal. 
 
-- Creating the world
-- Create master node DONE
-- Save model for inference DONE
-- Evaluation metrics DONE
-- Add parameters
-- Make a launch file
+Developed for the CS 4023 Intro to Intelligent Robotics major project. 
 
-## Layers
+### Code attributions
 
-- Global Planner - takes the sequence of landmarks. Passes one by one to local planner
-- Local Planner (Navigator)
-  - Takes in sensor input
-  - Gives input to DDQN
-  - Gets actions back
-  - Executes actions
-- DDQN
-  - Implements 2 DQNs
-  - Produces and sends predefined actions
-  - Updates itself (training)
+Deep Q network:
 
-## Modes
+https://docs.pytorch.org/tutorials/intermediate/reinforcement_q_learning.html   
+https://docs.pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html  
+ 
 
-- Training
-- Testing
+Gazebo Gym Environment:
 
-## Experiment Setup
+https://bitbucket.org/theconstructcore/drone_training/src/master/drone_training/src/myquadcopter_env.py  
 
-Since we are learning a predefined route to be traversed, how should training be done?
-
-- Option 1: Intermediary goals with final landmark as final goal
-  - Will store a list of goals. Progressively reach each goal with a big reward, and change the goal, do not terminate. Final landmark has big big reward.
-    Here is a source about sequential goals:
-    https://arxiv.org/pdf/2503.21677v1
-- Option 2: Let the robot randomly go to each landmark from a random starting position?
-  - Prefer the first one; this doesn't sound that efficient.
-
-### Sources for setting up the environment:
-
-https://bitbucket.org/theconstructcore/drone_training/src/master/drone_training/src/myquadcopter_env.py
-
-https://www.theconstruct.ai/using-openai-ros/
-
-### Code sources
-
-https://docs.pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
-
-https://docs.pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html
+- gazebo_connection.py referenced to control gazebo simulation.
 
 https://github.com/ROBOTIS-GIT/turtlebot3_machine_learning/tree/main/turtlebot3_dqn
-
-https://bitbucket.org/theconstructcore/drone_training/src/master/drone_training
